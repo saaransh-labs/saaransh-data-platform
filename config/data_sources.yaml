@@ -1,0 +1,9 @@
+data_sources:
+  nse:
+    nifty500:
+      url: "https://archives.nseindia.com/content/indices/ind_nifty500list.csv"
+      format: "csv"
+    market_data:
+      url: "https://www.nseindia.com/api/quote-equity?symbol={symbol}"
+      reference: "https://www.nseindia.com/get-quotes/equity?symbol={symbol}"
+      format: "json"

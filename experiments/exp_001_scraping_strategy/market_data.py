@@ -21,4 +21,3 @@
 
 from src.common.path import CONFIG_DIR
 
-print(f"Config directory: {CONFIG_DIR}")

@@ -12,12 +12,13 @@ MARKET_DATA_URL = "https://www.nseindia.com/api/quote-equity?symbol="
 REFERER_URL = "https://www.nseindia.com/get-quotes/equity?symbol="
 
 BASE_HEADER = {
-    "User-Agent": "Mozilla/5.0",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept": "application/json"
 }
 MAX_RETRIES = 3
 MAX_CONCURRENT = 3
-BASE_DELAY = (1, 4)
+BASE_DELAY_MIN = 1
+BASE_DELAY_MAX = 4
 OUTPUT_DIR = Path("data")
 
 
@@ -79,7 +80,7 @@ class NSEClient:
         async with self.semaphore:
             for attempt in range(self.max_retries):
                 try:
-                    delay = random.uniform(*BASE_DELAY)
+                    delay = random.uniform(BASE_DELAY_MIN, BASE_DELAY_MAX)
                     print(f"Fetching {symbol} (Attempt {attempt + 1}/{self.max_retries}) with delay {delay:.2f} seconds...")
                     
                     await asyncio.sleep(delay)  # Random delay to avoid rate limits
@@ -91,7 +92,7 @@ class NSEClient:
                     async with session.get(
                         url, headers=headers, timeout=aiohttp.ClientTimeout(total=5)
                     ) as response:
-                        
+
                         if response.status == 200:
                             data = await response.json()
                             await aggregator.update(symbol, data)
@@ -114,7 +115,7 @@ class NSEClient:
                 sleep_time = (2 ** attempt) + random.uniform(0, 1)  # Exponential backoff with jitter
                 print(f"Retrying {symbol} in {sleep_time:.2f} seconds...")
                 await asyncio.sleep(sleep_time)
-        
+
         print(f"[Failed] {symbol} after {self.max_retries} attempts.")
         await aggregator.update(symbol, None)  # Mark as failed after max retries
 
@@ -147,5 +148,5 @@ if __name__ == "__main__":
     
     output_dir = Path("experiments/exp_001_nifty_500_metadata/data")
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     run(df.Symbol.tolist()[:5], output_dir)

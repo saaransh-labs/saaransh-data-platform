@@ -1,5 +1,6 @@
 data_sources:
   nse:
+    url: "https://www.nseindia.com"
     nifty500:
       url: "https://archives.nseindia.com/content/indices/ind_nifty500list.csv"
       format: "csv"

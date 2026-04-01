@@ -176,12 +176,12 @@ class RateLimiter:
         released no faster than one per *min_interval* seconds.
         """
         async with self._lock:
-            now = asyncio.get_event_loop().time()
+            now = asyncio.get_running_loop().time()
             elapsed = now - self._last_call
             if elapsed < self.min_interval:
                 # Pause for the remainder of the current window.
                 await asyncio.sleep(self.min_interval - elapsed)
-            self._last_call = asyncio.get_event_loop().time()
+            self._last_call = asyncio.get_running_loop().time()
 
 
 # ---------------------------------------------------------------------------
@@ -278,16 +278,16 @@ class NSEClient:
         headers = get_headers(symbol)
 
         for attempt in range(self.max_retries):
+            # Bootstrap session cookies on the very first attempt only.
+            if attempt == 0:
+                await self.refresh_cookies(session, headers)
+
             # Respect the global rate limit before acquiring the concurrency slot.
             await self.rate_limiter.acquire()
 
             async with self.semaphore:
                 try:
                     print(f"Fetching {symbol} (Attempt {attempt + 1}/{self.max_retries})...")
-
-                    # Bootstrap session cookies on the very first attempt only.
-                    if attempt == 0:
-                        await self.refresh_cookies(session, headers)
 
                     url = f"{MARKET_DATA_URL}{symbol}"
 

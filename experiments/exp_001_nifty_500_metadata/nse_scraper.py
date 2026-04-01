@@ -39,7 +39,7 @@ MAX_CONCURRENT = 3       # Maximum number of in-flight requests at any time
 BASE_DELAY_MIN = 1       # Minimum base delay (seconds) used for jitter calculations
 BASE_DELAY_MAX = 4       # Maximum base delay (seconds) used for jitter calculations
 RATE_LIMIT_INTERVAL = 1.0  # Minimum interval (seconds) between consecutive requests
-OUTPUT_DIR = Path("data")  # Default directory for persisted JSON files
+OUTPUT_DIR = Path("experiments/exp_001_nifty_500_metadata/data")  # Default directory for persisted JSON files
 
 
 # ---------------------------------------------------------------------------
@@ -383,9 +383,25 @@ def run(symbols: List[str], output_dir: Path) -> None:
 
 if __name__ == "__main__":
     # ---------------------------------------------------------------------------
-    # Quick smoke-test: fetch data for the first 5 Nifty 500 constituents.
+    # Quick smoke-test: fetch data for the first N Nifty 500 constituents.
     # ---------------------------------------------------------------------------
+    import argparse
     import pandas as pd
+
+    parser = argparse.ArgumentParser(description="Fetch NSE market data for Nifty 500 constituents.")
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=OUTPUT_DIR,
+        help="Directory where fetched JSON files will be saved (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=5,
+        help="Number of symbols to fetch for a quick test run (default: %(default)s)",
+    )
+    args = parser.parse_args()
 
     # Official NSE CSV listing all Nifty 500 constituents.
     NIFTY500_URL = "https://archives.nseindia.com/content/indices/ind_nifty500list.csv"
@@ -393,8 +409,11 @@ if __name__ == "__main__":
     df = pd.read_csv(NIFTY500_URL)
     print(f"Fetched {len(df)} symbols from NSE India.")
 
-    output_dir = Path("experiments/exp_001_nifty_500_metadata/data")
+    output_dir = args.output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Limit to 5 symbols for a quick trial run.
-    run(df.Symbol.tolist()[:5], output_dir)
+    # Limit to N symbols for a quick trial run.
+    if args.limit > 0:
+        N = min(args.limit, len(df))
+        print(f"Limiting to the first {N} symbols for this run.")
+    run(df.Symbol.tolist()[:N], output_dir)

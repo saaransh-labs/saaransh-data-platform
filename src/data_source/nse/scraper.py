@@ -12,6 +12,7 @@ import json
 import random
 import asyncio
 import aiohttp
+from urllib.parse import quote
 from dataclasses import asdict
 from pathlib import Path
 from datetime import date
@@ -300,7 +301,7 @@ class NSEClient:
                 try:
                     print(f"Fetching {symbol} (Attempt {attempt + 1}/{self.max_retries})...")
 
-                    url = MARKET_DATA_URL.format(symbol=symbol)
+                    url = MARKET_DATA_URL.format(symbol=quote(symbol, safe=""))
 
                     async with session.get(
                         url,
@@ -403,9 +404,14 @@ def collect_normalized_results(symbols: list[str], raw_metadata_dir: Path, as_of
     companies = []
     for symbol in symbols:
         json_file = raw_metadata_dir / f"{symbol}.json"
-        print(json_file)
+        if not json_file.exists():
+            print(f"{json_file} does not exist. Skipping.")
+            continue
         raw = json.load(open(json_file))
-        company = normalize(raw)
+        try:
+            company = normalize(raw)
+        except KeyError as e:
+            print(f"{symbol}: {e}")
         companies.append(company)
     return companies
 

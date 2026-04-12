@@ -39,3 +39,7 @@ Thumbs.db
 
 # Data files
 data/
+
+# mentoring related docs
+.mentor/
+CLAUDE.md

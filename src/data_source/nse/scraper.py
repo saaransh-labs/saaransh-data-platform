@@ -193,6 +193,11 @@ class RateLimiter:
             if elapsed < self.min_interval:
                 # Pause for the remainder of the current window.
                 await asyncio.sleep(self.min_interval - elapsed)
+            
+            # Add jitter after the minimum interval is satisfied
+            jitter = random.uniform(0.2, 0.8)
+            await asyncio.sleep(jitter)
+            
             self._last_call = asyncio.get_running_loop().time()
 
 

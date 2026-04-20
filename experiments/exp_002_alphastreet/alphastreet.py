@@ -74,3 +74,28 @@ async def async_scrape():
         parse_page(html, "page-0")
 
 asyncio.run(async_scrape())
+
+"""
+Alphastreet scraper
+
+Stage 1: Scrape links from index pages
+Mode: Full Scan
+1. Scan page 1 to get the links and max page number
+2. Create max number of tasks
+3. Run them in async with max concurrency
+4. Save data after each run
+5. Keep a progress tracker in sqlite
+
+Mode: Incremental
+1. Run scan from page 1 in sync
+2. Keep going until a URL is already available in database
+
+Stage 2: Scrape the transcripts
+1. Async tasks of pending / failed links
+2. Scrape the data and save them in disk
+3. Update the progress tracker
+
+Stage 3: Parse transcripts
+1. Check the database for pending trancripts
+2. Parse and save them in disk for downstream tasks.
+"""

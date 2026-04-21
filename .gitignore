@@ -40,6 +40,9 @@ Thumbs.db
 # Data files
 data/
 
+# SQLite databases
+*.db
+
 # mentoring related docs
 .mentor/
 CLAUDE.md

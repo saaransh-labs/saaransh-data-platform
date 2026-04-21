@@ -31,6 +31,9 @@ import asyncio
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 
+from db import AlphastreetDB
+from src.common.config import DB_PATH
+
 RAW_LINKS_HTML_DIR = Path("data")/"raw"/"links"
 RAW_LINKS_HTML_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -41,7 +44,7 @@ view_port = {'width': 1920, 'height': 1080}
 user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
 
 base_url = "https://alphastreet.com/india/category/transcripts/"
-
+alpha_db = AlphastreetDB(DB_PATH)
 
 def save_file(content: str, output_file: Path, mode: str = "w") -> None:
     with open(output_file, mode, encoding="utf-8") as fp:
@@ -54,13 +57,16 @@ def save_file(content: str, output_file: Path, mode: str = "w") -> None:
 #             a.string = f"{link_text} [{a["href"]}]"
 
 def extract_links(soup: BeautifulSoup):
+    data = []
     for article in soup.select("article.finance-card"):
         a = article.select_one("h2 a")
         title = a.get_text(strip=True) # type:ignore
         url = a["href"] # type:ignore
         date = article.select_one(".text-muted span").get_text(strip=True).lstrip("● ").strip() # type:ignore
         type_ = "transcript" if "Transcript" in title else "article"
-        print(f"{title}, {url}, {date}, {type_}\n")
+        data.append((url, title, date, type_))
+    
+    alpha_db.upsert_links(data)
 
 def parse_page(html: str, fname: str) -> None:
     html_output_file = RAW_LINKS_HTML_DIR/f"{fname}.html"
@@ -101,3 +107,6 @@ async def async_scrape():
 
 asyncio.run(async_scrape())
 
+pending_data = alpha_db.get_pending_links()
+for row in pending_data:
+    print(f"{row["title"]} - {row["url"]}")
